@@ -15,9 +15,9 @@ const PORT = process.env.PORT || 3000;
 connectDB();
 
 const ALLOWED_ORIGINS = [
-    "http://localhos:3000",
-    "http://localhost:5173",
-    "task-management-web-application-livid.vercel.app"
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "https://task-management-web-application-livid.vercel.app",
 ];
 
 app.use(
