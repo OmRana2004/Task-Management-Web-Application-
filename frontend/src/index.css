@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+* { font-family: 'Inter', sans-serif; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 99px; }
+
+.sidebar-shadow { box-shadow: 4px 0 24px rgba(99,102,241,0.06); }
+.card-shadow { box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(99,102,241,0.06); }
+.card-shadow-hover { box-shadow: 0 4px 24px rgba(99,102,241,0.14), 0 1px 4px rgba(0,0,0,0.06); }
+.modal-shadow { box-shadow: 0 24px 80px rgba(15,23,42,0.18), 0 0 0 1px rgba(99,102,241,0.1); }

@@ -1,20 +1,29 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import API from "../services/api";
+import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
 import StatsCard from "../components/StatsCard";
 import SearchFilter from "../components/SearchFilter";
 import TaskCard from "../components/TaskCard";
 import Pagination from "../components/Pagination";
 import Toast from "../components/Toast";
+import TaskComposer from "../components/TaskComposer";
+import EditModal from "../components/EditModal";
+import EmptyState from "../components/EmptyState";
+
+const pageVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
+};
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.07 } },
+  visible: { opacity: 1, transition: { staggerChildren: 0.07, delayChildren: 0.05 } },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 14 },
+  hidden: { opacity: 0, y: 16 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.38, ease: "easeOut" } },
 };
 
@@ -22,24 +31,23 @@ const Dashboard = () => {
   const [tasks, setTasks] = useState([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
-  const [editTitle, setEditTitle] = useState("");
-  const [editDescription, setEditDescription] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [togglingId, setTogglingId] = useState(null);
   const [toast, setToast] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false);
 
   const tasksPerPage = 6;
 
   const showToast = useCallback((message, type = "success") => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 3200);
   }, []);
 
   const fetchTasks = useCallback(async () => {
@@ -55,15 +63,14 @@ const Dashboard = () => {
   }, [showToast]);
 
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
-  useEffect(() => { setCurrentPage(1); }, [search, filter]);
+  useEffect(() => { setCurrentPage(1); }, [search, filter, sortBy]);
 
-  const handleSubmit = async () => {
+  const handleCreate = async ({ title, description, priority }) => {
     if (!title.trim()) return showToast("Title is required.", "error");
     setSubmitting(true);
     try {
-      await API.post("/create", { title: title.trim(), description: description.trim() });
-      setTitle(""); setDescription("");
-      showToast("Task created successfully!");
+      await API.post("/create", { title: title.trim(), description: description.trim(), priority });
+      showToast("Task created!");
       fetchTasks();
     } catch { showToast("Failed to create task.", "error"); }
     finally { setSubmitting(false); }
@@ -90,20 +97,13 @@ const Dashboard = () => {
     finally { setTogglingId(null); }
   };
 
-  const editTask = (task) => {
-    setEditingTask(task);
-    setEditTitle(task.title);
-    setEditDescription(task.description || "");
-    setIsEditOpen(true);
-  };
+  const editTask = (task) => { setEditingTask(task); setIsEditOpen(true); };
 
-  const updateTask = async () => {
-    if (!editTitle.trim()) return showToast("Title cannot be empty.", "error");
+  const updateTask = async ({ title, description }) => {
+    if (!title.trim()) return showToast("Title cannot be empty.", "error");
     setSubmitting(true);
     try {
-      await API.put(`/update/${editingTask._id}`, {
-        title: editTitle.trim(), description: editDescription.trim(),
-      });
+      await API.put(`/update/${editingTask._id}`, { title: title.trim(), description: description.trim() });
       setIsEditOpen(false); setEditingTask(null);
       showToast("Task updated!");
       fetchTasks();
@@ -111,252 +111,154 @@ const Dashboard = () => {
     finally { setSubmitting(false); }
   };
 
-  const filteredTasks = useMemo(() => tasks.filter((task) => {
-    const matchesSearch = (task.title || "").toLowerCase().includes(search.toLowerCase());
-    const matchesFilter = filter === "all" || task.status === filter;
-    return matchesSearch && matchesFilter;
-  }), [tasks, search, filter]);
+  const filteredTasks = useMemo(() => {
+    let result = tasks.filter((task) => {
+      const matchesSearch = (task.title || "").toLowerCase().includes(search.toLowerCase());
+      const matchesFilter = filter === "all" || task.status === filter;
+      return matchesSearch && matchesFilter;
+    });
+    if (sortBy === "newest") result = [...result].reverse();
+    if (sortBy === "oldest") result = [...result];
+    if (sortBy === "az") result = [...result].sort((a, b) => a.title.localeCompare(b.title));
+    return result;
+  }, [tasks, search, filter, sortBy]);
 
   const totalPages = Math.ceil(filteredTasks.length / tasksPerPage);
   const paginatedTasks = filteredTasks.slice((currentPage - 1) * tasksPerPage, currentPage * tasksPerPage);
   const completedCount = tasks.filter((t) => t.status === "completed").length;
   const pendingCount = tasks.filter((t) => t.status === "pending").length;
   const completionRate = tasks.length ? Math.round((completedCount / tasks.length) * 100) : 0;
+  const productivityScore = Math.min(100, completionRate + (tasks.length > 5 ? 10 : 0));
 
   return (
-    <div className="min-h-screen" style={{ background: "linear-gradient(145deg, #f0f4ff 0%, #faf9ff 50%, #f5f0ff 100%)" }}>
-      {/* Subtle background shapes */}
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full opacity-30"
-          style={{ background: "radial-gradient(circle, #c7d2fe, transparent)" }} />
-        <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full opacity-20"
-          style={{ background: "radial-gradient(circle, #ddd6fe, transparent)" }} />
-      </div>
+    <div className="flex h-screen overflow-hidden" style={{ background: "#F8F9FF", fontFamily: "'Inter', sans-serif" }}>
 
-      <Navbar />
+      {/* Sidebar */}
+      <Sidebar
+        isOpen={sidebarOpen}
+        mobileOpen={sidebarMobileOpen}
+        onMobileClose={() => setSidebarMobileOpen(false)}
+        stats={{ total: tasks.length, completed: completedCount, pending: pendingCount }}
+        filter={filter}
+        setFilter={setFilter}
+      />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 pb-6">
+      {/* Main */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <Navbar
+          onMenuClick={() => {
+            if (window.innerWidth < 768) setSidebarMobileOpen(true);
+            else setSidebarOpen((p) => !p);
+          }}
+          search={search}
+          setSearch={setSearch}
+        />
 
-        {/* Stats */}
-        <motion.div
-          variants={containerVariants} initial="hidden" animate="visible"
-          className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4"
-        >
-          {[
-            { title: "Total Tasks", value: tasks.length, icon: "📋", color: "violet" },
-            { title: "Completed", value: completedCount, icon: "✅", color: "emerald" },
-            { title: "Pending", value: pendingCount, icon: "🕐", color: "amber" },
-            { title: "Done Rate", value: `${completionRate}%`, icon: "🎯", color: "sky" },
-          ].map((s) => (
-            <motion.div key={s.title} variants={itemVariants}>
-              <StatsCard {...s} />
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* Create Task */}
-        <motion.div
-          initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.4 }}
-          className="bg-white rounded-2xl p-4 mb-4 shadow-sm"
-          style={{ border: "1px solid rgba(99,102,241,0.12)" }}
-        >
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-6 h-6 rounded-lg flex items-center justify-center text-sm"
-              style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}>
-              <span className="text-white text-xs">+</span>
-            </div>
-            <span className="text-sm font-semibold text-gray-700">New Task</span>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-2.5">
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-              placeholder="What needs to be done?"
-              maxLength={100}
-              className="flex-1 px-3.5 py-2.5 rounded-xl text-sm text-gray-800 placeholder-gray-400 outline-none transition-all duration-200"
-              style={{
-                background: "#f8f9ff",
-                border: "1.5px solid #e8eaf6",
-              }}
-              onFocus={(e) => { e.target.style.border = "1.5px solid #6366f1"; e.target.style.boxShadow = "0 0 0 3px rgba(99,102,241,0.08)"; }}
-              onBlur={(e) => { e.target.style.border = "1.5px solid #e8eaf6"; e.target.style.boxShadow = "none"; }}
-            />
-            <input
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-              placeholder="Add a note... (optional)"
-              maxLength={300}
-              className="flex-1 px-3.5 py-2.5 rounded-xl text-sm text-gray-800 placeholder-gray-400 outline-none transition-all duration-200"
-              style={{ background: "#f8f9ff", border: "1.5px solid #e8eaf6" }}
-              onFocus={(e) => { e.target.style.border = "1.5px solid #6366f1"; e.target.style.boxShadow = "0 0 0 3px rgba(99,102,241,0.08)"; }}
-              onBlur={(e) => { e.target.style.border = "1.5px solid #e8eaf6"; e.target.style.boxShadow = "none"; }}
-            />
-            <motion.button
-              whileTap={{ scale: 0.96 }} whileHover={{ scale: 1.02 }}
-              onClick={handleSubmit}
-              disabled={submitting || !title.trim()}
-              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white shrink-0 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              style={{
-                background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-                boxShadow: "0 4px 14px rgba(99,102,241,0.35)",
-              }}
-            >
-              {submitting
-                ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                : <>
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Add Task
-                  </>
-              }
-            </motion.button>
-          </div>
-        </motion.div>
-
-        {/* Search & Filter */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }} className="mb-4">
-          <SearchFilter search={search} setSearch={setSearch} filter={filter} setFilter={setFilter} totalCount={filteredTasks.length} />
-        </motion.div>
-
-        {/* Task Grid */}
-        {loading ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-40 rounded-2xl bg-white animate-pulse"
-                style={{ border: "1px solid #f0f0f0" }} />
-            ))}
-          </div>
-        ) : paginatedTasks.length === 0 ? (
+        <main className="flex-1 overflow-y-auto">
           <motion.div
-            initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center justify-center py-16 gap-3"
+            variants={pageVariants} initial="hidden" animate="visible"
+            className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
           >
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl bg-white shadow-sm"
-              style={{ border: "1px solid #e8eaf6" }}>
-              {search || filter !== "all" ? "🔍" : "📝"}
+            {/* Page header */}
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">My Workspace</h1>
+                <p className="text-sm text-slate-400 mt-0.5">
+                  {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+                </p>
+              </div>
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium text-emerald-600"
+                style={{ background: "#ecfdf5", border: "1px solid #a7f3d0" }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                All systems operational
+              </div>
             </div>
-            <p className="text-gray-400 text-sm font-medium">
-              {search || filter !== "all" ? "No tasks match your filter." : "No tasks yet — add one above!"}
-            </p>
-          </motion.div>
-        ) : (
-          <AnimatePresence mode="popLayout">
+
+            {/* Stats */}
             <motion.div
               variants={containerVariants} initial="hidden" animate="visible"
-              className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3"
+              className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6"
             >
-              {paginatedTasks.map((task) => (
-                <motion.div key={task._id} variants={itemVariants} layout>
-                  <TaskCard
-                    task={task} onDelete={deleteTask} onToggle={toggleStatus} onEdit={editTask}
-                    isDeleting={deletingId === task._id} isToggling={togglingId === task._id}
-                  />
+              {[
+                { title: "Total Tasks", value: tasks.length, icon: "📋", color: "violet", trend: "+12%", trendUp: true, sub: "this week" },
+                { title: "Completed", value: completedCount, icon: "✅", color: "emerald", trend: "+8%", trendUp: true, sub: "vs last week" },
+                { title: "In Progress", value: pendingCount, icon: "⏳", color: "amber", trend: "-3%", trendUp: false, sub: "vs last week" },
+                { title: "Productivity", value: `${productivityScore}%`, icon: "🎯", color: "sky", trend: "+5%", trendUp: true, sub: "score" },
+              ].map((s) => (
+                <motion.div key={s.title} variants={itemVariants}>
+                  <StatsCard {...s} />
                 </motion.div>
               ))}
             </motion.div>
-          </AnimatePresence>
-        )}
 
-        <Pagination currentPage={currentPage} totalPages={totalPages} setCurrentPage={setCurrentPage} />
+            {/* Task Composer */}
+            <motion.div
+              initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.22, duration: 0.4 }} className="mb-6"
+            >
+              <TaskComposer onSubmit={handleCreate} submitting={submitting} />
+            </motion.div>
+
+            {/* Search & Filter */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }} className="mb-5"
+            >
+              <SearchFilter
+                filter={filter} setFilter={setFilter}
+                sortBy={sortBy} setSortBy={setSortBy}
+                totalCount={filteredTasks.length}
+              />
+            </motion.div>
+
+            {/* Task Grid */}
+            {loading ? (
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[...Array(6)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="h-44 rounded-2xl bg-white animate-pulse"
+                    style={{ border: "1px solid #f1f5f9" }}
+                  />
+                ))}
+              </div>
+            ) : paginatedTasks.length === 0 ? (
+              <EmptyState hasFilters={!!(search || filter !== "all")} />
+            ) : (
+              <AnimatePresence mode="popLayout">
+                <motion.div
+                  variants={containerVariants} initial="hidden" animate="visible"
+                  className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                >
+                  {paginatedTasks.map((task) => (
+                    <motion.div key={task._id} variants={itemVariants} layout exit={{ opacity: 0, scale: 0.95 }}>
+                      <TaskCard
+                        task={task} onDelete={deleteTask} onToggle={toggleStatus} onEdit={editTask}
+                        isDeleting={deletingId === task._id} isToggling={togglingId === task._id}
+                      />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </AnimatePresence>
+            )}
+
+            <Pagination currentPage={currentPage} totalPages={totalPages} setCurrentPage={setCurrentPage} />
+          </motion.div>
+        </main>
       </div>
 
       {/* Edit Modal */}
-      <AnimatePresence>
-        {isEditOpen && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: "rgba(15,15,35,0.45)", backdropFilter: "blur(8px)" }}
-            onClick={(e) => e.target === e.currentTarget && (setIsEditOpen(false), setEditingTask(null))}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.92, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.92, y: 20 }}
-              transition={{ type: "spring", stiffness: 320, damping: 28 }}
-              className="bg-white w-full max-w-md rounded-2xl overflow-hidden"
-              style={{ boxShadow: "0 24px 60px rgba(99,102,241,0.15), 0 0 0 1px rgba(99,102,241,0.1)" }}
-            >
-              {/* Modal header gradient strip */}
-              <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, #6366f1, #8b5cf6, #a78bfa)" }} />
+      <EditModal
+        isOpen={isEditOpen}
+        task={editingTask}
+        submitting={submitting}
+        onSave={updateTask}
+        onClose={() => { setIsEditOpen(false); setEditingTask(null); }}
+      />
 
-              <div className="p-6">
-                <div className="flex items-center gap-2.5 mb-5">
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-                    style={{ background: "linear-gradient(135deg, #eef2ff, #ede9fe)" }}>
-                    <svg className="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round"
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h2 className="text-gray-800 font-semibold text-base">Edit Task</h2>
-                    <p className="text-gray-400 text-xs">Update your task details</p>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-xs font-medium text-gray-500 mb-1.5 block">Title</label>
-                    <input
-                      value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
-                      placeholder="Task title"
-                      maxLength={100}
-                      className="w-full px-3.5 py-2.5 rounded-xl text-sm text-gray-800 placeholder-gray-400 outline-none transition-all"
-                      style={{ background: "#f8f9ff", border: "1.5px solid #e8eaf6" }}
-                      onFocus={(e) => { e.target.style.border = "1.5px solid #6366f1"; e.target.style.boxShadow = "0 0 0 3px rgba(99,102,241,0.08)"; }}
-                      onBlur={(e) => { e.target.style.border = "1.5px solid #e8eaf6"; e.target.style.boxShadow = "none"; }}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-gray-500 mb-1.5 block">Description</label>
-                    <textarea
-                      rows={3}
-                      value={editDescription}
-                      onChange={(e) => setEditDescription(e.target.value)}
-                      placeholder="Add more details..."
-                      maxLength={300}
-                      className="w-full px-3.5 py-2.5 rounded-xl text-sm text-gray-800 placeholder-gray-400 outline-none transition-all resize-none"
-                      style={{ background: "#f8f9ff", border: "1.5px solid #e8eaf6" }}
-                      onFocus={(e) => { e.target.style.border = "1.5px solid #6366f1"; e.target.style.boxShadow = "0 0 0 3px rgba(99,102,241,0.08)"; }}
-                      onBlur={(e) => { e.target.style.border = "1.5px solid #e8eaf6"; e.target.style.boxShadow = "none"; }}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex gap-2.5 mt-5">
-                  <motion.button
-                    whileTap={{ scale: 0.96 }}
-                    onClick={updateTask}
-                    disabled={submitting || !editTitle.trim()}
-                    className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
-                    style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: "0 4px 14px rgba(99,102,241,0.3)" }}
-                  >
-                    {submitting
-                      ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                      : "Save Changes"}
-                  </motion.button>
-                  <motion.button
-                    whileTap={{ scale: 0.96 }}
-                    onClick={() => { setIsEditOpen(false); setEditingTask(null); }}
-                    className="flex-1 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-all"
-                    style={{ border: "1.5px solid #e8eaf6" }}
-                  >
-                    Cancel
-                  </motion.button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
+      {/* Toast */}
       <AnimatePresence>
         {toast && <Toast message={toast.message} type={toast.type} />}
       </AnimatePresence>
