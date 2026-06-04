@@ -1,37 +1,70 @@
 import { motion } from "framer-motion";
 
-const colorMap = {
-  indigo: "from-indigo-500/20 to-indigo-600/5 border-indigo-500/30 text-indigo-400",
-  green:  "from-green-500/20 to-green-600/5 border-green-500/30 text-green-400",
-  yellow: "from-yellow-500/20 to-yellow-600/5 border-yellow-500/30 text-yellow-400",
-  purple: "from-purple-500/20 to-purple-600/5 border-purple-500/30 text-purple-400",
+const colorConfig = {
+  violet: {
+    glow: "rgba(139,92,246,0.15)",
+    border: "rgba(139,92,246,0.2)",
+    text: "#a78bfa",
+    bg: "rgba(139,92,246,0.08)",
+  },
+  emerald: {
+    glow: "rgba(16,185,129,0.12)",
+    border: "rgba(16,185,129,0.2)",
+    text: "#34d399",
+    bg: "rgba(16,185,129,0.07)",
+  },
+  amber: {
+    glow: "rgba(245,158,11,0.12)",
+    border: "rgba(245,158,11,0.2)",
+    text: "#fbbf24",
+    bg: "rgba(245,158,11,0.07)",
+  },
+  sky: {
+    glow: "rgba(14,165,233,0.12)",
+    border: "rgba(14,165,233,0.2)",
+    text: "#38bdf8",
+    bg: "rgba(14,165,233,0.07)",
+  },
 };
 
-const StatsCard = ({ title, value, icon, color = "indigo" }) => {
-  const colors = colorMap[color];
+const StatsCard = ({ title, value, icon, color = "violet" }) => {
+  const c = colorConfig[color];
 
   return (
     <motion.div
-      whileHover={{ scale: 1.04, y: -3 }}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      className={`relative bg-gradient-to-br ${colors} border backdrop-blur-sm rounded-2xl p-5 overflow-hidden`}
+      whileHover={{ scale: 1.03, y: -2 }}
+      transition={{ type: "spring", stiffness: 300, damping: 22 }}
+      className="relative rounded-2xl p-4 overflow-hidden cursor-default"
+      style={{
+        background: `linear-gradient(135deg, ${c.bg} 0%, rgba(255,255,255,0.02) 100%)`,
+        border: `1px solid ${c.border}`,
+        boxShadow: `0 0 20px ${c.glow}`,
+      }}
     >
-      {/* Background glow */}
-      <div className="absolute -top-4 -right-4 w-20 h-20 rounded-full bg-current opacity-5 blur-xl" />
+      {/* Shimmer top line */}
+      <div
+        className="absolute top-0 left-0 right-0 h-px"
+        style={{ background: `linear-gradient(90deg, transparent, ${c.text}40, transparent)` }}
+      />
 
-      <div className="flex items-start justify-between">
+      <div className="flex items-center justify-between">
         <div>
-          <p className="text-slate-400 text-sm font-medium">{title}</p>
-          <motion.h2
+          <p className="text-white/40 text-xs font-medium uppercase tracking-wider mb-1">{title}</p>
+          <motion.p
             key={value}
-            initial={{ opacity: 0, y: -8 }}
+            initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-3xl font-bold text-white mt-1"
+            className="text-2xl font-bold text-white"
           >
             {value}
-          </motion.h2>
+          </motion.p>
         </div>
-        <span className="text-3xl">{icon}</span>
+        <div
+          className="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
+          style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.text }}
+        >
+          {icon}
+        </div>
       </div>
     </motion.div>
   );

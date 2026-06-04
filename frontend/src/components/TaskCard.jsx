@@ -1,100 +1,152 @@
 import { motion } from "framer-motion";
-import { FaTrash, FaEdit, FaCheck, FaClock } from "react-icons/fa";
 
 const TaskCard = ({ task, onDelete, onToggle, onEdit, isDeleting, isToggling }) => {
-  const isCompleted = task.status === "completed";
+  const done = task.status === "completed";
 
   return (
     <motion.div
       layout
-      whileHover={{ y: -4, scale: 1.015 }}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      className={`relative group bg-slate-900/80 backdrop-blur border rounded-2xl p-5 shadow-lg overflow-hidden transition-colors duration-300 ${
-        isCompleted ? "border-green-500/30" : "border-slate-700/60"
-      }`}
+      whileHover={{ y: -3, scale: 1.01 }}
+      transition={{ type: "spring", stiffness: 300, damping: 22 }}
+      className="relative rounded-2xl p-4 overflow-hidden group"
+      style={{
+        background: done
+          ? "linear-gradient(135deg, rgba(16,185,129,0.06) 0%, rgba(255,255,255,0.02) 100%)"
+          : "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)",
+        border: done
+          ? "1px solid rgba(16,185,129,0.2)"
+          : "1px solid rgba(255,255,255,0.07)",
+      }}
     >
-      {/* Status glow line */}
+      {/* Top accent line */}
       <div
-        className={`absolute top-0 left-0 right-0 h-[2px] transition-all duration-500 ${
-          isCompleted
-            ? "bg-gradient-to-r from-green-400 to-emerald-500"
-            : "bg-gradient-to-r from-yellow-400 to-orange-400"
-        }`}
+        className="absolute top-0 left-0 right-0 h-px transition-all duration-500"
+        style={{
+          background: done
+            ? "linear-gradient(90deg, transparent, rgba(52,211,153,0.6), transparent)"
+            : "linear-gradient(90deg, transparent, rgba(139,92,246,0.4), transparent)",
+        }}
       />
 
-      {/* Header */}
-      <div className="flex justify-between items-start gap-3 mb-3">
-        <h3
-          className={`text-white text-base font-bold leading-snug line-clamp-2 transition-all ${
-            isCompleted ? "line-through opacity-60" : ""
-          }`}
-        >
-          {task.title}
-        </h3>
-
+      {/* Status dot + badge */}
+      <div className="flex items-start justify-between gap-2 mb-2.5">
+        <div className="flex items-center gap-2 min-w-0">
+          <div
+            className="w-2 h-2 rounded-full shrink-0 mt-0.5"
+            style={{
+              background: done ? "#34d399" : "#fbbf24",
+              boxShadow: done ? "0 0 6px rgba(52,211,153,0.6)" : "0 0 6px rgba(251,191,36,0.6)",
+            }}
+          />
+          <h3
+            className={`text-sm font-semibold leading-snug truncate transition-all ${
+              done ? "text-white/40 line-through" : "text-white"
+            }`}
+          >
+            {task.title}
+          </h3>
+        </div>
         <span
-          className={`shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1 ${
-            isCompleted
-              ? "bg-green-500/20 text-green-400 border border-green-500/30"
-              : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
-          }`}
+          className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium"
+          style={{
+            background: done ? "rgba(52,211,153,0.12)" : "rgba(251,191,36,0.12)",
+            color: done ? "#34d399" : "#fbbf24",
+            border: done ? "1px solid rgba(52,211,153,0.2)" : "1px solid rgba(251,191,36,0.2)",
+          }}
         >
-          {isCompleted ? <FaCheck className="text-[10px]" /> : <FaClock className="text-[10px]" />}
-          {task.status}
+          {done ? "Done" : "Pending"}
         </span>
       </div>
 
       {/* Description */}
-      <p className="text-slate-400 text-sm leading-relaxed line-clamp-3 min-h-[48px]">
-        {task.description || "No description provided."}
+      <p className="text-white/30 text-xs leading-relaxed line-clamp-2 mb-3 min-h-[32px]">
+        {task.description || "No description added."}
       </p>
 
-      {/* Created date */}
+      {/* Date */}
       {task.createdAt && (
-        <p className="text-slate-600 text-xs mt-3">
-          {new Date(task.createdAt).toLocaleDateString("en-US", {
-            month: "short", day: "numeric", year: "numeric",
-          })}
+        <p className="text-white/20 text-[10px] mb-3">
+          {new Date(task.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
         </p>
       )}
 
       {/* Actions */}
-      <div className="flex gap-2 mt-4">
+      <div className="flex gap-1.5">
+        {/* Edit */}
         <motion.button
-          whileTap={{ scale: 0.94 }}
+          whileTap={{ scale: 0.93 }}
           onClick={() => onEdit(task)}
-          className="flex-1 bg-blue-600/20 hover:bg-blue-600 border border-blue-500/30 hover:border-blue-500 transition-all duration-200 p-2.5 rounded-xl text-blue-400 hover:text-white flex items-center justify-center gap-1.5 text-sm font-medium"
+          className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200"
+          style={{
+            background: "rgba(99,102,241,0.1)",
+            border: "1px solid rgba(99,102,241,0.2)",
+            color: "#818cf8",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(99,102,241,0.2)";
+            e.currentTarget.style.color = "#a5b4fc";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(99,102,241,0.1)";
+            e.currentTarget.style.color = "#818cf8";
+          }}
         >
-          <FaEdit className="text-xs" /> Edit
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round"
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          Edit
         </motion.button>
 
+        {/* Toggle */}
         <motion.button
-          whileTap={{ scale: 0.94 }}
+          whileTap={{ scale: 0.93 }}
           onClick={() => onToggle(task)}
           disabled={isToggling}
-          className={`flex-1 transition-all duration-200 p-2.5 rounded-xl flex items-center justify-center gap-1.5 text-sm font-medium border ${
-            isCompleted
-              ? "bg-yellow-500/20 hover:bg-yellow-500 border-yellow-500/30 hover:border-yellow-500 text-yellow-400 hover:text-white"
-              : "bg-green-600/20 hover:bg-green-600 border-green-500/30 hover:border-green-500 text-green-400 hover:text-white"
-          }`}
+          className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200"
+          style={{
+            background: done ? "rgba(251,191,36,0.1)" : "rgba(52,211,153,0.1)",
+            border: done ? "1px solid rgba(251,191,36,0.2)" : "1px solid rgba(52,211,153,0.2)",
+            color: done ? "#fbbf24" : "#34d399",
+          }}
         >
           {isToggling ? (
-            <span className="w-3.5 h-3.5 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+            <span className="w-3 h-3 border border-current/30 border-t-current rounded-full animate-spin" />
           ) : (
-            <><FaCheck className="text-xs" /> {isCompleted ? "Undo" : "Done"}</>
+            <>
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              {done ? "Undo" : "Done"}
+            </>
           )}
         </motion.button>
 
+        {/* Delete */}
         <motion.button
-          whileTap={{ scale: 0.94 }}
+          whileTap={{ scale: 0.93 }}
           onClick={() => onDelete(task._id)}
           disabled={isDeleting}
-          className="bg-red-500/20 hover:bg-red-500 border border-red-500/30 hover:border-red-500 transition-all duration-200 p-2.5 rounded-xl text-red-400 hover:text-white"
+          className="px-3 py-1.5 rounded-lg text-xs transition-all duration-200"
+          style={{
+            background: "rgba(239,68,68,0.08)",
+            border: "1px solid rgba(239,68,68,0.15)",
+            color: "#f87171",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(239,68,68,0.18)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(239,68,68,0.08)";
+          }}
         >
           {isDeleting ? (
-            <span className="w-3.5 h-3.5 border-2 border-current/30 border-t-current rounded-full animate-spin block" />
+            <span className="w-3 h-3 border border-current/30 border-t-current rounded-full animate-spin block" />
           ) : (
-            <FaTrash className="text-xs" />
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
           )}
         </motion.button>
       </div>
