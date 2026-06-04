@@ -15,8 +15,8 @@ const Pagination = ({ currentPage, totalPages, setCurrentPage }) => {
         whileTap={{ scale: 0.9 }}
         disabled={currentPage === 1}
         onClick={() => setCurrentPage(currentPage - 1)}
-        className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:text-white/80 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
-        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+        className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all bg-white"
+        style={{ border: "1.5px solid #e8eaf6" }}
       >
         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -28,23 +28,24 @@ const Pagination = ({ currentPage, totalPages, setCurrentPage }) => {
         return (
           <span key={page} className="flex items-center gap-1.5">
             {prev && page - prev > 1 && (
-              <span className="text-white/20 text-xs px-1">…</span>
+              <span className="text-gray-300 text-xs px-1">…</span>
             )}
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => setCurrentPage(page)}
-              className="w-8 h-8 rounded-lg text-xs font-semibold transition-all duration-200"
+              className="w-8 h-8 rounded-xl text-xs font-semibold transition-all duration-200"
               style={
                 currentPage === page
                   ? {
-                      background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
+                      background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
                       color: "#fff",
-                      boxShadow: "0 0 12px rgba(124,58,237,0.4)",
+                      boxShadow: "0 4px 12px rgba(99,102,241,0.35)",
+                      border: "none",
                     }
                   : {
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.07)",
-                      color: "rgba(255,255,255,0.35)",
+                      background: "#fff",
+                      border: "1.5px solid #e8eaf6",
+                      color: "#9ca3af",
                     }
               }
             >
@@ -58,8 +59,8 @@ const Pagination = ({ currentPage, totalPages, setCurrentPage }) => {
         whileTap={{ scale: 0.9 }}
         disabled={currentPage === totalPages}
         onClick={() => setCurrentPage(currentPage + 1)}
-        className="w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:text-white/80 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
-        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+        className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all bg-white"
+        style={{ border: "1.5px solid #e8eaf6" }}
       >
         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />

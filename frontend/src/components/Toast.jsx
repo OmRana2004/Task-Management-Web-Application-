@@ -9,20 +9,21 @@ const Toast = ({ message, type = "success" }) => {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 40, scale: 0.92 }}
       transition={{ type: "spring", stiffness: 320, damping: 26 }}
-      className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-medium whitespace-nowrap"
+      className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap bg-white"
       style={{
-        background: isSuccess
-          ? "linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.08))"
-          : "linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.08))",
-        border: isSuccess ? "1px solid rgba(52,211,153,0.25)" : "1px solid rgba(248,113,113,0.25)",
-        color: isSuccess ? "#34d399" : "#f87171",
-        backdropFilter: "blur(16px)",
+        border: isSuccess ? "1px solid #a7f3d0" : "1px solid #fecdd3",
+        color: isSuccess ? "#059669" : "#e11d48",
         boxShadow: isSuccess
-          ? "0 8px 24px rgba(16,185,129,0.15)"
-          : "0 8px 24px rgba(239,68,68,0.15)",
+          ? "0 8px 24px rgba(16,185,129,0.15), 0 2px 8px rgba(0,0,0,0.06)"
+          : "0 8px 24px rgba(244,63,94,0.15), 0 2px 8px rgba(0,0,0,0.06)",
       }}
     >
-      <span className="text-base">{isSuccess ? "✓" : "✕"}</span>
+      <div
+        className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+        style={{ background: isSuccess ? "#10b981" : "#f43f5e" }}
+      >
+        {isSuccess ? "✓" : "✕"}
+      </div>
       {message}
     </motion.div>
   );
