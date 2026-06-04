@@ -16,12 +16,14 @@ connectDB();
 
 const ALLOWED_ORIGINS = [
     "http://localhos:3000",
-    "http://localhost:5173"
+    "http://localhost:5173",
+    "task-management-web-application-livid.vercel.app"
 ];
 
 app.use(
     cors({
-        origin : ALLOWED_ORIGINS
+        origin : ALLOWED_ORIGINS,
+        credentials: true,
     })
 );
 
