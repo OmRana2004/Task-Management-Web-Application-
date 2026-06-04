@@ -30,7 +30,7 @@ const itemVariants = {
 const Dashboard = () => {
   const [tasks, setTasks] = useState([]);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState("pending");
   const [sortBy, setSortBy] = useState("newest");
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
@@ -131,7 +131,10 @@ const Dashboard = () => {
   const productivityScore = Math.min(100, completionRate + (tasks.length > 5 ? 10 : 0));
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: "#F8F9FF", fontFamily: "'Inter', sans-serif" }}>
+    <div
+  className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950"
+  style={{ fontFamily: "'Inter', sans-serif" }}
+>
 
       {/* Sidebar */}
       <Sidebar

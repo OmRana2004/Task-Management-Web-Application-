@@ -7,6 +7,12 @@ const priorities = [
   { value: "high", label: "High", color: "#ef4444", bg: "#fff1f2", border: "#fecdd3" },
 ];
 
+const inputCls = `w-full px-3.5 py-2.5 rounded-xl text-sm outline-none transition-all
+  bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400
+  focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100
+  dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200
+  dark:placeholder-slate-500 dark:focus:border-indigo-500 dark:focus:ring-indigo-500/20`;
+
 const TaskComposer = ({ onSubmit, submitting }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -18,15 +24,12 @@ const TaskComposer = ({ onSubmit, submitting }) => {
     setTitle(""); setDescription(""); setPriority("medium"); setExpanded(false);
   };
 
-  const selectedPriority = priorities.find((p) => p.value === priority);
-
   return (
-    <div
-      className="bg-white rounded-2xl overflow-hidden card-shadow transition-all duration-200"
-      style={{ border: "1px solid #e8eaf6" }}
-    >
-      {/* Top gradient strip */}
-      <div className="h-0.5 w-full" style={{ background: "linear-gradient(90deg, #6366f1, #8b5cf6, #a78bfa)" }} />
+    <div className="rounded-2xl overflow-hidden card-shadow
+      bg-white border border-slate-200
+      dark:bg-slate-900 dark:border-slate-700">
+      <div className="h-0.5 w-full"
+        style={{ background: "linear-gradient(90deg, #6366f1, #8b5cf6, #a78bfa)" }} />
 
       <div className="p-4">
         <div className="flex items-center gap-2 mb-3">
@@ -36,11 +39,12 @@ const TaskComposer = ({ onSubmit, submitting }) => {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
           </div>
-          <span className="text-sm font-semibold text-slate-700">New Task</span>
-          <span className="text-[10px] text-slate-400 ml-auto hidden sm:block">Press Enter ↵ to add</span>
+          <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">New Task</span>
+          <span className="text-[10px] ml-auto hidden sm:block text-slate-400 dark:text-slate-600">
+            Press Enter ↵ to add
+          </span>
         </div>
 
-        {/* Main input */}
         <div className="flex gap-2">
           <input
             value={title}
@@ -49,19 +53,14 @@ const TaskComposer = ({ onSubmit, submitting }) => {
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && title.trim() && handleSubmit()}
             placeholder="What needs to be done?"
             maxLength={100}
-            className="flex-1 px-3.5 py-2.5 rounded-xl text-sm text-slate-800 placeholder-slate-400 outline-none transition-all"
-            style={{ background: "#f8f9ff", border: "1.5px solid #e8eaf6" }}
-            onFocus2={(e) => { e.target.style.border = "1.5px solid #6366f1"; }}
+            className={inputCls + " flex-1"}
           />
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={handleSubmit}
             disabled={submitting || !title.trim()}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{
-              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-              boxShadow: "0 4px 14px rgba(99,102,241,0.35)",
-            }}
+            style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: "0 4px 14px rgba(99,102,241,0.35)" }}
           >
             {submitting
               ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -75,7 +74,6 @@ const TaskComposer = ({ onSubmit, submitting }) => {
           </motion.button>
         </div>
 
-        {/* Expanded area */}
         <AnimatePresence>
           {expanded && (
             <motion.div
@@ -92,25 +90,24 @@ const TaskComposer = ({ onSubmit, submitting }) => {
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Add a description... (optional)"
                   maxLength={300}
-                  className="w-full px-3.5 py-2.5 rounded-xl text-sm text-slate-800 placeholder-slate-400 outline-none transition-all resize-none"
-                  style={{ background: "#f8f9ff", border: "1.5px solid #e8eaf6" }}
+                  className={inputCls + " resize-none"}
                 />
-
-                {/* Priority selector */}
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-400 font-medium">Priority:</span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-medium text-slate-400 dark:text-slate-500">Priority:</span>
                   <div className="flex gap-1.5">
                     {priorities.map((p) => (
                       <motion.button
                         key={p.value}
                         whileTap={{ scale: 0.93 }}
                         onClick={() => setPriority(p.value)}
-                        className="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all"
-                        style={
-                          priority === p.value
-                            ? { background: p.bg, color: p.color, border: `1.5px solid ${p.border}` }
-                            : { background: "#f8f9ff", color: "#94a3b8", border: "1.5px solid #e8eaf6" }
-                        }
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
+                          priority !== p.value
+                            ? "bg-slate-100 text-slate-400 border border-slate-200 dark:bg-slate-800 dark:text-slate-500 dark:border-slate-700"
+                            : ""
+                        }`}
+                        style={priority === p.value
+                          ? { background: p.bg, color: p.color, border: `1.5px solid ${p.border}` }
+                          : undefined}
                       >
                         {p.label}
                       </motion.button>
@@ -118,7 +115,9 @@ const TaskComposer = ({ onSubmit, submitting }) => {
                   </div>
                   <button
                     onClick={() => setExpanded(false)}
-                    className="ml-auto text-xs text-slate-400 hover:text-slate-600 transition-colors"
+                    className="ml-auto text-xs transition-colors
+                      text-slate-400 hover:text-slate-600
+                      dark:text-slate-600 dark:hover:text-slate-400"
                   >
                     Collapse ↑
                   </button>
