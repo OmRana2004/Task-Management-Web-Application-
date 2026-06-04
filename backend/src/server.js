@@ -15,7 +15,8 @@ const PORT = process.env.PORT || 3000;
 connectDB();
 
 const ALLOWED_ORIGINS = [
-    "http://localhos:3000"
+    "http://localhos:3000",
+    "http://localhost:5173"
 ];
 
 app.use(
